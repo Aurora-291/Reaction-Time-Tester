@@ -21,11 +21,30 @@
             <div class="title-section">
                 <h1>Reaction Time Tester</h1>
                 <div class="mode-label">Current Mode: <span id="currentMode">Classic</span></div>
+                <div class="difficulty-label">Difficulty: <span id="currentDifficulty">Normal</span></div>
             </div>
             <div class="profile">
                 <span class="username">Player</span>
                 <div class="rank">Rookie</div>
                 <div class="level">Level 1</div>
+            </div>
+        </div>
+        <div class="settings-panel">
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="normal">Normal</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+                <button class="difficulty-btn" data-difficulty="extreme">Extreme</button>
+            </div>
+            <div class="sound-controls">
+                <label class="sound-toggle">
+                    <input type="checkbox" id="soundToggle" checked>
+                    <span>Sound Effects</span>
+                </label>
+                <label class="feedback-toggle">
+                    <input type="checkbox" id="feedbackToggle" checked>
+                    <span>Visual Feedback</span>
+                </label>
             </div>
         </div>
         <div class="stats-container">
@@ -49,6 +68,16 @@
                 <span>Streak</span>
                 <span id="streak">0</span>
             </div>
+            <div class="stat-card">
+                <i class="fas fa-percentage"></i>
+                <span>Accuracy</span>
+                <span id="accuracy">100%</span>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-fire"></i>
+                <span>Attempts</span>
+                <span id="attempts">0</span>
+            </div>
         </div>
         <div class="mode-selector">
             <button class="mode-btn active" data-mode="classic">
@@ -66,6 +95,7 @@
         </div>
         <div id="game-area">
             <div id="target"></div>
+            <div id="feedback"></div>
         </div>
         <div class="controls">
             <button id="startBtn" class="primary-btn">
