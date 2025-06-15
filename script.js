@@ -35,29 +35,26 @@ themeToggle.addEventListener('change', () => {
 });
 
 function startClassicMode() {
-    const settings = difficultySettings[currentDifficulty];
     target.style.background = modeColors.classic;
     target.innerHTML = '';
-    target.style.width = `${settings.targetSize}px`;
-    target.style.height = `${settings.targetSize}px`;
+    target.style.width = '60px';
+    target.style.height = '60px';
     
-    const delay = settings.minDelay + Math.random() * (settings.maxDelay - settings.minDelay);
+    const delay = 1000 + Math.random() * 4000;
     setTimeout(() => {
         target.style.background = '#00ff00';
         target.classList.add('target-pulse');
         startTime = Date.now();
-        playSound('start');
         setTimeout(() => target.classList.remove('target-pulse'), 500);
     }, delay);
 }
 
 function startCountdownMode() {
-    const settings = difficultySettings[currentDifficulty];
     let count = 3;
     target.innerHTML = count;
     target.style.background = modeColors.countdown;
-    target.style.width = `${settings.targetSize}px`;
-    target.style.height = `${settings.targetSize}px`;
+    target.style.width = '60px';
+    target.style.height = '60px';
     
     const interval = setInterval(() => {
         count--;
@@ -69,27 +66,24 @@ function startCountdownMode() {
             target.style.background = '#00ff00';
             target.classList.add('target-pulse');
             startTime = Date.now();
-            playSound('start');
             setTimeout(() => target.classList.remove('target-pulse'), 500);
         }
     }, 1000);
 }
 
 function startPrecisionMode() {
-    const settings = difficultySettings[currentDifficulty];
-    target.style.width = `${Math.max(settings.targetSize - 20, 15)}px`;
-    target.style.height = `${Math.max(settings.targetSize - 20, 15)}px`;
+    target.style.width = '40px';
+    target.style.height = '40px';
     target.style.background = modeColors.precision;
     target.innerHTML = '<i class="fas fa-crosshairs"></i>';
     startTime = Date.now();
-    playSound('start');
 }
 
 function getRandomPosition() {
+    const targetRect = target.getBoundingClientRect();
     const gameRect = document.getElementById('game-area').getBoundingClientRect();
-    const targetSize = parseInt(target.style.width);
-    const maxX = gameRect.width - targetSize;
-    const maxY = gameRect.height - targetSize;
+    const maxX = gameRect.width - targetRect.width;
+    const maxY = gameRect.height - targetRect.height;
     return {
         x: Math.random() * maxX,
         y: Math.random() * maxY
@@ -105,7 +99,6 @@ function moveTarget() {
 function startGame() {
     gameActive = true;
     startBtn.disabled = true;
-    totalAttempts++;
     moveTarget();
     
     switch(currentMode) {
@@ -119,10 +112,9 @@ function startGame() {
             chainCount = 0;
             target.innerHTML = chainCount;
             target.style.background = modeColors.chain;
-            target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
-            target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
+            target.style.width = '60px';
+            target.style.height = '60px';
             startTime = Date.now();
-            playSound('start');
             break;
         case 'precision':
             startPrecisionMode();
@@ -130,10 +122,18 @@ function startGame() {
     }
 }
 
+modeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        modeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        currentModeElement.textContent = btn.textContent.trim();
+        target.style.background = modeColors[currentMode];
+    });
+});
+
 function updateStats(reactionTime) {
     if (typeof reactionTime === 'number') {
-        successfulAttempts++;
-        
         if (reactionTime < bestTime) {
             bestTime = reactionTime;
             bestTimeElement.textContent = `${reactionTime}ms`;
@@ -152,13 +152,6 @@ function updateStats(reactionTime) {
         
         streakElement.textContent = streak;
         scoreElement.textContent = score;
-        
-        const accuracy = Math.round((successfulAttempts / totalAttempts) * 100);
-        accuracyElement.textContent = `${accuracy}%`;
-        attemptsElement.textContent = totalAttempts;
-        
-        showFeedback(reactionTime);
-        playSound('success');
     }
 }
 
@@ -195,16 +188,10 @@ resetBtn.addEventListener('click', () => {
     bestTime = Infinity;
     streak = 0;
     score = 0;
-    totalAttempts = 0;
-    successfulAttempts = 0;
     bestTimeElement.textContent = '---';
     avgTimeElement.textContent = '---';
     scoreElement.textContent = '0';
     streakElement.textContent = '0';
-    accuracyElement.textContent = '100%';
-    attemptsElement.textContent = '0';
 });
 
 startBtn.addEventListener('click', startGame);
-
-loadSettings();

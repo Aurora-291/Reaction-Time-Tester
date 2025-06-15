@@ -50,29 +50,22 @@
                 <span id="streak">0</span>
             </div>
         </div>
-        <div class="game-modes">
-            <div class="mode-grid">
-                <div class="mode-card active" data-mode="classic">
-                    <i class="fas fa-bullseye"></i>
-                    <h3>Classic</h3>
-                    <p>Standard reaction time test</p>
-                </div>
-                <div class="mode-card" data-mode="countdown">
-                    <i class="fas fa-hourglass"></i>
-                    <h3>Countdown</h3>
-                    <p>React after countdown ends</p>
-                </div>
-                <div class="mode-card" data-mode="chain">
-                    <i class="fas fa-link"></i>
-                    <h3>Chain</h3>
-                    <p>Multiple rapid reactions</p>
-                </div>
-                <div class="mode-card" data-mode="precision">
-                    <i class="fas fa-crosshairs"></i>
-                    <h3>Precision</h3>
-                    <p>Smaller targets for accuracy</p>
-                </div>
-            </div>
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="classic">
+                <i class="fas fa-bullseye"></i>Classic
+            </button>
+            <button class="mode-btn" data-mode="countdown">
+                <i class="fas fa-hourglass"></i>Countdown
+            </button>
+            <button class="mode-btn" data-mode="chain">
+                <i class="fas fa-link"></i>Chain
+            </button>
+            <button class="mode-btn" data-mode="precision">
+                <i class="fas fa-crosshairs"></i>Precision
+            </button>
+            <button class="mode-btn" data-mode="random">
+                <i class="fas fa-random"></i>Random
+            </button>
         </div>
         <div id="game-area">
             <div id="target"></div>
