@@ -6,60 +6,17 @@ const resetBtn = document.getElementById('resetBtn');
 const avgTimeElement = document.getElementById('avgTime');
 const scoreElement = document.getElementById('score');
 const streakElement = document.getElementById('streak');
-const accuracyElement = document.getElementById('accuracy');
-const attemptsElement = document.getElementById('attempts');
 const modeBtns = document.querySelectorAll('.mode-btn');
-const difficultyBtns = document.querySelectorAll('.difficulty-btn');
 const currentModeElement = document.getElementById('currentMode');
-const currentDifficultyElement = document.getElementById('currentDifficulty');
-const soundToggle = document.getElementById('soundToggle');
-const feedbackToggle = document.getElementById('feedbackToggle');
-const feedbackElement = document.getElementById('feedback');
 
 let currentMode = 'classic';
-let currentDifficulty = 'normal';
 let chainCount = 0;
 let times = [];
 let streak = 0;
 let score = 0;
-let totalAttempts = 0;
-let successfulAttempts = 0;
 let gameActive = false;
 let startTime = 0;
 let bestTime = Infinity;
-let soundEnabled = true;
-let feedbackEnabled = true;
-
-const modeCards = document.querySelectorAll('.mode-card');
-let memorySequence = [];
-let userSequence = [];
-let memoryMode = false;
-let movingTarget = false;
-let moveInterval;
-
-const modeDescriptions = {
-    classic: 'Click when the target turns green',
-    countdown: 'Click immediately after countdown',
-    chain: 'Click rapidly 5 times in a row',
-    precision: 'Hit the small moving target',
-    memory: 'Remember and repeat the sequence',
-    moving: 'Track and click the moving target'
-};
-
-function startMemoryMode() {
-    memoryMode = true;
-    memorySequence = [];
-    userSequence = [];
-    const sequenceLength = currentDifficulty === 'easy' ? 3 : 
-                          currentDifficulty === 'normal' ? 4 :
-                          currentDifficulty === 'hard' ? 5 : 6;
-    
-    for (let i = 0; i < sequenceLength; i++) {
-        memorySequence.push(Math.floor(Math.random() * 4));
-    }
-    
-    showMemorySequence();
-}
 
 const modeColors = {
     classic: '#FF4081',
@@ -70,131 +27,12 @@ const modeColors = {
     moving: '#00BCD4'
 };
 
-function showMemorySequence() {
-    let index = 0;
-    const showNext = () => {
-        if (index < memorySequence.length) {
-            const pos = getRandomPosition();
-            target.style.left = `${pos.x}px`;
-            target.style.top = `${pos.y}px`;
-            target.style.background = `hsl(${memorySequence[index] * 90}, 70%, 60%)`;
-            target.classList.add('target-pulse');
-            
-            setTimeout(() => {
-                target.classList.remove('target-pulse');
-                target.style.background = 'transparent';
-                index++;
-                setTimeout(showNext, 500);
-            }, 800);
-        } else {
-            target.style.background = modeColors.memory;
-            startTime = Date.now();
-        }
-    };
-    showNext();
-}
-
-function startMovingMode() {
-    movingTarget = true;
-    target.style.background = modeColors.moving;
-    target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
-    target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
-    startTime = Date.now();
-    
-    moveInterval = setInterval(() => {
-        const pos = getRandomPosition();
-        target.style.left = `${pos.x}px`;
-        target.style.top = `${pos.y}px`;
-    }, 1000);
-}
-
-modeCards.forEach(card => {
-    card.addEventListener('click', () => {
-        modeCards.forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        currentMode = card.dataset.mode;
-        currentModeElement.textContent = card.querySelector('h3').textContent;
-        
-        target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
-        target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
-        target.style.background = modeColors[currentMode] || '#FF4081';
-    });
-});
-
-const difficultySettings = {
-    easy: { minDelay: 2000, maxDelay: 5000, targetSize: 80 },
-    normal: { minDelay: 1000, maxDelay: 4000, targetSize: 60 },
-    hard: { minDelay: 500, maxDelay: 2500, targetSize: 40 },
-    extreme: { minDelay: 200, maxDelay: 1500, targetSize: 25 }
-};
-
 themeToggle.addEventListener('change', () => {
     document.body.classList.toggle('light-mode');
     document.body.classList.toggle('dark-mode');
     const isDarkMode = document.body.classList.contains('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
 });
-
-soundToggle.addEventListener('change', () => {
-    soundEnabled = soundToggle.checked;
-    localStorage.setItem('soundEnabled', soundEnabled);
-});
-
-feedbackToggle.addEventListener('change', () => {
-    feedbackEnabled = feedbackToggle.checked;
-    localStorage.setItem('feedbackEnabled', feedbackEnabled);
-});
-
-function playSound(type) {
-    if (!soundEnabled) return;
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    if (type === 'success') {
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
-    } else if (type === 'start') {
-        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-    }
-    
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.2);
-}
-
-function showFeedback(reactionTime) {
-    if (!feedbackEnabled) return;
-    
-    let feedbackText = '';
-    let feedbackClass = '';
-    
-    if (reactionTime < 200) {
-        feedbackText = 'EXCELLENT!';
-        feedbackClass = 'feedback-excellent';
-    } else if (reactionTime < 300) {
-        feedbackText = 'GOOD!';
-        feedbackClass = 'feedback-good';
-    } else if (reactionTime < 500) {
-        feedbackText = 'AVERAGE';
-        feedbackClass = 'feedback-average';
-    } else {
-        feedbackText = 'SLOW';
-        feedbackClass = 'feedback-slow';
-    }
-    
-    feedbackElement.textContent = feedbackText;
-    feedbackElement.className = `feedback-show ${feedbackClass}`;
-    
-    setTimeout(() => {
-        feedbackElement.classList.remove('feedback-show');
-    }, 1500);
-}
 
 function startClassicMode() {
     const settings = difficultySettings[currentDifficulty];
@@ -262,28 +100,6 @@ function moveTarget() {
     const pos = getRandomPosition();
     target.style.left = `${pos.x}px`;
     target.style.top = `${pos.y}px`;
-}
-
-function loadSettings() {
-    const darkModeSaved = localStorage.getItem('darkMode');
-    const soundSaved = localStorage.getItem('soundEnabled');
-    const feedbackSaved = localStorage.getItem('feedbackEnabled');
-    
-    if (darkModeSaved === 'true') {
-        document.body.classList.remove('light-mode');
-        document.body.classList.add('dark-mode');
-        themeToggle.checked = true;
-    }
-    
-    if (soundSaved !== null) {
-        soundEnabled = soundSaved === 'true';
-        soundToggle.checked = soundEnabled;
-    }
-    
-    if (feedbackSaved !== null) {
-        feedbackEnabled = feedbackSaved === 'true';
-        feedbackToggle.checked = feedbackEnabled;
-    }
 }
 
 function startGame() {
@@ -372,18 +188,6 @@ target.addEventListener('click', () => {
     startBtn.disabled = false;
     target.style.background = modeColors[currentMode];
     startTime = 0;
-});
-
-difficultyBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        difficultyBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentDifficulty = btn.dataset.difficulty;
-        currentDifficultyElement.textContent = currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1);
-        
-        target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
-        target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
-    });
 });
 
 resetBtn.addEventListener('click', () => {
