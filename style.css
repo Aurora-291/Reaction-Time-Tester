@@ -251,6 +251,88 @@ input:checked + .slider:before {
     backdrop-filter: blur(5px);
 }
 
+.game-modes {
+    margin: 20px 0;
+}
+
+.mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mode-card {
+    padding: 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.mode-card.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.mode-card i {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.mode-card h3 {
+    margin: 10px 0 5px 0;
+    font-size: 1.2em;
+}
+
+.mode-card p {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin: 0;
+}
+
+.difficulty-selector {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.difficulty-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    color: inherit;
+    font-size: 0.9em;
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.difficulty-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.difficulty-btn.active {
+    background: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(168, 143, 106, 0.4);
+}
+
 #target {
     width: 60px;
     height: 60px;

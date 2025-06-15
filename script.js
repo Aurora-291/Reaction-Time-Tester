@@ -30,18 +30,102 @@ let bestTime = Infinity;
 let soundEnabled = true;
 let feedbackEnabled = true;
 
-const difficultySettings = {
-    easy: { minDelay: 2000, maxDelay: 5000, targetSize: 80 },
-    normal: { minDelay: 1000, maxDelay: 4000, targetSize: 60 },
-    hard: { minDelay: 500, maxDelay: 2500, targetSize: 40 },
-    extreme: { minDelay: 200, maxDelay: 1500, targetSize: 25 }
+const modeCards = document.querySelectorAll('.mode-card');
+let memorySequence = [];
+let userSequence = [];
+let memoryMode = false;
+let movingTarget = false;
+let moveInterval;
+
+const modeDescriptions = {
+    classic: 'Click when the target turns green',
+    countdown: 'Click immediately after countdown',
+    chain: 'Click rapidly 5 times in a row',
+    precision: 'Hit the small moving target',
+    memory: 'Remember and repeat the sequence',
+    moving: 'Track and click the moving target'
 };
+
+function startMemoryMode() {
+    memoryMode = true;
+    memorySequence = [];
+    userSequence = [];
+    const sequenceLength = currentDifficulty === 'easy' ? 3 : 
+                          currentDifficulty === 'normal' ? 4 :
+                          currentDifficulty === 'hard' ? 5 : 6;
+    
+    for (let i = 0; i < sequenceLength; i++) {
+        memorySequence.push(Math.floor(Math.random() * 4));
+    }
+    
+    showMemorySequence();
+}
 
 const modeColors = {
     classic: '#FF4081',
     countdown: '#2196F3',
     chain: '#4CAF50',
-    precision: '#9C27B0'
+    precision: '#9C27B0',
+    memory: '#FF9800',
+    moving: '#00BCD4'
+};
+
+function showMemorySequence() {
+    let index = 0;
+    const showNext = () => {
+        if (index < memorySequence.length) {
+            const pos = getRandomPosition();
+            target.style.left = `${pos.x}px`;
+            target.style.top = `${pos.y}px`;
+            target.style.background = `hsl(${memorySequence[index] * 90}, 70%, 60%)`;
+            target.classList.add('target-pulse');
+            
+            setTimeout(() => {
+                target.classList.remove('target-pulse');
+                target.style.background = 'transparent';
+                index++;
+                setTimeout(showNext, 500);
+            }, 800);
+        } else {
+            target.style.background = modeColors.memory;
+            startTime = Date.now();
+        }
+    };
+    showNext();
+}
+
+function startMovingMode() {
+    movingTarget = true;
+    target.style.background = modeColors.moving;
+    target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
+    target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
+    startTime = Date.now();
+    
+    moveInterval = setInterval(() => {
+        const pos = getRandomPosition();
+        target.style.left = `${pos.x}px`;
+        target.style.top = `${pos.y}px`;
+    }, 1000);
+}
+
+modeCards.forEach(card => {
+    card.addEventListener('click', () => {
+        modeCards.forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        currentMode = card.dataset.mode;
+        currentModeElement.textContent = card.querySelector('h3').textContent;
+        
+        target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
+        target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
+        target.style.background = modeColors[currentMode] || '#FF4081';
+    });
+});
+
+const difficultySettings = {
+    easy: { minDelay: 2000, maxDelay: 5000, targetSize: 80 },
+    normal: { minDelay: 1000, maxDelay: 4000, targetSize: 60 },
+    hard: { minDelay: 500, maxDelay: 2500, targetSize: 40 },
+    extreme: { minDelay: 200, maxDelay: 1500, targetSize: 25 }
 };
 
 themeToggle.addEventListener('change', () => {
@@ -288,19 +372,6 @@ target.addEventListener('click', () => {
     startBtn.disabled = false;
     target.style.background = modeColors[currentMode];
     startTime = 0;
-});
-
-modeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        modeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentMode = btn.dataset.mode;
-        currentModeElement.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
-        
-        target.style.width = `${difficultySettings[currentDifficulty].targetSize}px`;
-        target.style.height = `${difficultySettings[currentDifficulty].targetSize}px`;
-        target.style.background = modeColors[currentMode];
-    });
 });
 
 difficultyBtns.forEach(btn => {

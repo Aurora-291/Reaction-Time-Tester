@@ -79,19 +79,39 @@
                 <span id="attempts">0</span>
             </div>
         </div>
-        <div class="mode-selector">
-            <button class="mode-btn active" data-mode="classic">
-                <i class="fas fa-bullseye"></i>Classic
-            </button>
-            <button class="mode-btn" data-mode="countdown">
-                <i class="fas fa-hourglass"></i>Countdown
-            </button>
-            <button class="mode-btn" data-mode="chain">
-                <i class="fas fa-link"></i>Chain
-            </button>
-            <button class="mode-btn" data-mode="precision">
-                <i class="fas fa-crosshairs"></i>Precision
-            </button>
+        <div class="game-modes">
+            <div class="mode-grid">
+                <div class="mode-card active" data-mode="classic">
+                    <i class="fas fa-bullseye"></i>
+                    <h3>Classic</h3>
+                    <p>Standard reaction time test</p>
+                </div>
+                <div class="mode-card" data-mode="countdown">
+                    <i class="fas fa-hourglass"></i>
+                    <h3>Countdown</h3>
+                    <p>React after countdown ends</p>
+                </div>
+                <div class="mode-card" data-mode="chain">
+                    <i class="fas fa-link"></i>
+                    <h3>Chain</h3>
+                    <p>Multiple rapid reactions</p>
+                </div>
+                <div class="mode-card" data-mode="precision">
+                    <i class="fas fa-crosshairs"></i>
+                    <h3>Precision</h3>
+                    <p>Smaller targets for accuracy</p>
+                </div>
+                <div class="mode-card" data-mode="memory">
+                    <i class="fas fa-brain"></i>
+                    <h3>Memory</h3>
+                    <p>Remember the sequence</p>
+                </div>
+                <div class="mode-card" data-mode="moving">
+                    <i class="fas fa-arrows-alt"></i>
+                    <h3>Moving</h3>
+                    <p>Track moving targets</p>
+                </div>
+            </div>
         </div>
         <div id="game-area">
             <div id="target"></div>
