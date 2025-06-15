@@ -110,6 +110,10 @@ body.dark-mode {
     background: var(--secondary-color);
 }
 
+.accent-btn {
+    background: var(--accent-color);
+}
+
 .controls {
     display: flex;
     gap: 20px;

@@ -8,12 +8,15 @@ const scoreElement = document.getElementById('score');
 const streakElement = document.getElementById('streak');
 const modeBtns = document.querySelectorAll('.mode-btn');
 const currentModeElement = document.getElementById('currentMode');
+const shareBtn = document.getElementById('shareBtn');
+const xpElement = document.getElementById('xp');
 
 let currentMode = 'classic';
 let chainCount = 0;
 let times = [];
 let streak = 0;
 let score = 0;
+let xp = 0;
 let gameActive = false;
 let startTime = 0;
 let bestTime = Infinity;
@@ -127,7 +130,7 @@ modeBtns.forEach(btn => {
         modeBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentMode = btn.dataset.mode;
-        currentModeElement.textContent = btn.textContent.trim();
+        currentModeElement.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
         target.style.background = modeColors[currentMode];
     });
 });
@@ -138,20 +141,19 @@ function updateStats(reactionTime) {
             bestTime = reactionTime;
             bestTimeElement.textContent = `${reactionTime}ms`;
         }
-        
         times.push(reactionTime);
         const avg = times.reduce((a, b) => a + b) / times.length;
         avgTimeElement.textContent = `${Math.round(avg)}ms`;
-        
         if (reactionTime < 300) {
             streak++;
             score += streak * 10;
+            xp += 10;
         } else {
             streak = 0;
         }
-        
         streakElement.textContent = streak;
         scoreElement.textContent = score;
+        xpElement.textContent = xp;
     }
 }
 
