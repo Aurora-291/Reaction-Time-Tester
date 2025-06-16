@@ -10,10 +10,13 @@ const streakElement = document.getElementById('streak');
 const xpElement = document.getElementById('xp');
 const themeToggle = document.getElementById('themeToggle');
 const modeBtns = document.querySelectorAll('.mode-btn');
-const currentModeElement = document.getElementById('currentMode');
 const countdownElement = document.getElementById('countdown');
 const timerElement = document.getElementById('timer');
-const comboMeter = document.getElementById('combo-meter');
+const modal = document.getElementById('resultModal');
+const closeLevelModal = document.getElementById('closeLevelModal');
+const currentModeElement = document.getElementById('currentMode');
+const resultStats = document.querySelector('.result-stats');
+const attemptsElement = document.getElementById('attempts');
 
 let gameActive = false;
 let startTime = 0;
@@ -22,36 +25,33 @@ let bestTime = Infinity;
 let times = [];
 let streak = 0;
 let score = 0;
-let xp = 0;
 let currentMode = 'classic';
-let timerInterval = null;
 let chainCount = 0;
-let combo = 0;
 let allModesIndex = 0;
 let allModes = ['classic', 'countdown', 'chain', 'precision', 'random'];
+let timerInterval = null;
 
 const modeColors = {
     classic: '#FF4081',
     countdown: '#2196F3',
     chain: '#4CAF50',
     precision: '#9C27B0',
-    random: '#FF9800'
+    random: '#FF9800',
+    all: '#607D8B'
 };
 
-function updateTimer() {
-    if (startTime && gameActive) {
-        const currentTime = Date.now();
-        const elapsedTime = (currentTime - startTime) / 1000;
-        timerElement.textContent = elapsedTime.toFixed(3) + 's';
-    }
-}
+themeToggle.addEventListener('change', () => {
+    document.body.classList.toggle('light-mode');
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+});
 
-function startTimer() {
-    timerInterval = setInterval(updateTimer, 10);
-}
-
-function stopTimer() {
-    clearInterval(timerInterval);
+const darkModeSaved = localStorage.getItem('darkMode');
+if (darkModeSaved === 'true') {
+    document.body.classList.remove('light-mode');
+    document.body.classList.add('dark-mode');
+    themeToggle.checked = true;
 }
 
 function createParticle(x, y, color) {
@@ -82,59 +82,30 @@ function createRipple(x, y) {
     setTimeout(() => ripple.remove(), 600);
 }
 
-function updateCombo(success) {
-    if (success) {
-        combo++;
-        if (combo > 2) {
-            comboMeter.style.opacity = '1';
-            comboMeter.textContent = `Combo x${combo}`;
-        }
-    } else {
-        combo = 0;
-        comboMeter.style.opacity = '0';
+function updateTimer() {
+    if (startTime && gameActive) {
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - startTime) / 1000;
+        timerElement.textContent = elapsedTime.toFixed(3) + 's';
     }
 }
 
-function startCountdownMode() {
-    let count = 3;
-    countdownElement.textContent = count;
-    countdownElement.classList.add('fade-in');
-    target.style.background = modeColors.countdown;
-    const interval = setInterval(() => {
-        count--;
-        if (count > 0) {
-            countdownElement.textContent = count;
-        } else {
-            clearInterval(interval);
-            countdownElement.classList.remove('fade-in');
-            target.style.background = '#00ff00';
-            startTime = Date.now();
-            startTimer();
-        }
-    }, 1000);
+function startTimer() {
+    timerInterval = setInterval(updateTimer, 10);
 }
 
-function startPrecisionMode() {
-    target.style.width = '40px';
-    target.style.height = '40px';
-    target.style.background = modeColors.precision;
-    target.innerHTML = '<i class="fas fa-crosshairs"></i>';
-    startTime = Date.now();
-    startTimer();
+function stopTimer() {
+    clearInterval(timerInterval);
 }
 
-themeToggle.addEventListener('change', () => {
-    document.body.classList.toggle('light-mode');
-    document.body.classList.toggle('dark-mode');
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
-});
+function getRandomMode() {
+    const modes = ['classic', 'countdown', 'chain', 'precision'];
+    return modes[Math.floor(Math.random() * modes.length)];
+}
 
-const darkModeSaved = localStorage.getItem('darkMode');
-if (darkModeSaved === 'true') {
-    document.body.classList.remove('light-mode');
-    document.body.classList.add('dark-mode');
-    themeToggle.checked = true;
+function nextAllMode() {
+    allModesIndex = (allModesIndex + 1) % allModes.length;
+    return allModes[allModesIndex];
 }
 
 function updateStats(reactionTime) {
@@ -148,15 +119,19 @@ function updateStats(reactionTime) {
         avgTimeElement.textContent = `${Math.round(avg)}ms`;
         if (reactionTime < 300) {
             streak++;
-            score += streak * 10;
-            xp += 10;
-        } else {
-            streak = 0;
         }
         streakElement.textContent = streak;
         scoreElement.textContent = score;
-        xpElement.textContent = xp;
     }
+}
+
+function showResult(reactionTime) {
+    resultStats.innerHTML = `
+        <h3>${typeof reactionTime === 'number' ? reactionTime + 'ms' : reactionTime}</h3>
+        <p>Streak: ${streak}</p>
+        <p>Score: ${score}</p>
+    `;
+    modal.style.display = 'flex';
 }
 
 function getRandomPosition() {
@@ -176,26 +151,123 @@ function moveTarget() {
     target.style.top = `${pos.y}px`;
 }
 
-function startGame() {
-    gameActive = true;
-    startBtn.disabled = true;
-    target.style.background = modeColors[currentMode];
-    moveTarget();
-    
+function startClassicMode() {
+    target.style.background = modeColors.classic;
+    target.innerHTML = '';
     const delay = 1000 + Math.random() * 4000;
     timeoutId = setTimeout(() => {
         target.style.background = '#00ff00';
+        target.classList.add('pulse');
         startTime = Date.now();
         startTimer();
     }, delay);
+}
+
+function startCountdownMode() {
+    let count = 3;
+    countdownElement.textContent = count;
+    countdownElement.classList.add('fade-in');
+    target.style.background = modeColors.countdown;
+    const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownElement.textContent = count;
+        } else {
+            clearInterval(interval);
+            countdownElement.classList.remove('fade-in');
+            target.style.background = '#00ff00';
+            target.classList.add('pulse');
+            startTime = Date.now();
+            startTimer();
+        }
+    }, 1000);
+}
+
+function startPrecisionMode() {
+    target.style.width = '40px';
+    target.style.height = '40px';
+    target.style.background = modeColors.precision;
+    target.innerHTML = '<i class="fas fa-crosshairs"></i>';
+    startTime = Date.now();
+    startTimer();
+}
+
+function startRandomMode() {
+    const randomMode = getRandomMode();
+    currentMode = randomMode;
+    currentModeElement.textContent = randomMode.charAt(0).toUpperCase() + randomMode.slice(1);
+    startSelectedMode();
+}
+
+function startAllMode() {
+    const nextMode = nextAllMode();
+    currentMode = nextMode;
+    currentModeElement.textContent = nextMode.charAt(0).toUpperCase() + nextMode.slice(1);
+    startSelectedMode();
+}
+
+function startSelectedMode() {
+    switch(currentMode) {
+        case 'classic':
+            startClassicMode();
+            break;
+        case 'countdown':
+            startCountdownMode();
+            break;
+        case 'chain':
+            chainCount = 0;
+            target.textContent = chainCount;
+            target.style.background = modeColors.chain;
+            startTime = Date.now();
+            startTimer();
+            break;
+        case 'precision':
+            startPrecisionMode();
+            break;
+    }
+}
+
+function startGame() {
+    gameActive = true;
+    startBtn.disabled = true;
+    target.classList.remove('pulse');
+    moveTarget();
+    if (currentMode === 'random') {
+        startRandomMode();
+    } else if (currentMode === 'all') {
+        startAllMode();
+    } else {
+        startSelectedMode();
+    }
 }
 
 function endGame(reactionTime) {
     gameActive = false;
     clearTimeout(timeoutId);
     startBtn.disabled = false;
+    target.classList.remove('pulse');
     stopTimer();
     updateStats(reactionTime);
+    showResult(reactionTime);
+    if (currentMode === 'all' && typeof reactionTime === 'number') {
+        setTimeout(() => {
+            if (!gameActive) startGame();
+        }, 2000);
+    }
+}
+
+function shareResult() {
+    const text = `My Pro Reaction Master stats:\nBest Time: ${bestTimeElement.textContent}\nScore: ${score}\nStreak: ${streak}\nLevel: ${level}\nPlay now!`;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Pro Reaction Timer',
+            text: text
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(text)
+            .then(() => alert('Stats copied to clipboard!'))
+            .catch(console.error);
+    }
 }
 
 target.addEventListener('click', (e) => {
@@ -227,26 +299,14 @@ target.addEventListener('click', (e) => {
 });
 
 startBtn.addEventListener('click', startGame);
+shareBtn.addEventListener('click', shareResult);
 
 resetBtn.addEventListener('click', () => {
     times = [];
     bestTime = Infinity;
     streak = 0;
     score = 0;
-    xp = 0;
-    updateStats();
-});
-
-shareBtn.addEventListener('click', () => {
-    const text = `My Reaction Time: ${bestTimeElement.textContent}\nScore: ${score}`;
-    if (navigator.share) {
-        navigator.share({
-            title: 'Reaction Time Test',
-            text: text
-        });
-    } else {
-        navigator.clipboard.writeText(text);
-    }
+    chainCount = 0;
 });
 
 modeBtns.forEach(btn => {
@@ -255,8 +315,59 @@ modeBtns.forEach(btn => {
         btn.classList.add('active');
         currentMode = btn.dataset.mode;
         currentModeElement.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+        
+        if (gameActive) {
+            gameActive = false;
+            clearTimeout(timeoutId);
+            stopTimer();
+            startBtn.disabled = false;
+            target.classList.remove('pulse');
+        }
+        
+        target.style.width = '60px';
+        target.style.height = '60px';
         target.style.background = modeColors[currentMode];
     });
 });
 
-target.style.background = modeColors[currentMode];
+closeModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !startBtn.disabled) {
+        e.preventDefault();
+        startGame();
+    } else if (e.code === 'Escape') {
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+    }
+});
+
+let touchStartY = 0;
+document.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    const touchY = e.touches[0].clientY;
+    const diff = touchStartY - touchY;
+    if (diff < 0 && window.scrollY === 0) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+function initGame() {
+    target.style.background = modeColors[currentMode];
+    
+    const updateGameAreaSize = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    updateGameAreaSize();
+    window.addEventListener('resize', updateGameAreaSize);
+}
+
+initGame();
