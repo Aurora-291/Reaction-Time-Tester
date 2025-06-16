@@ -53,6 +53,11 @@
                 <span>Streak</span>
                 <span id="streak">0</span>
             </div>
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <span>XP</span>
+                <span id="xp">0</span>
+            </div>
         </div>
         <div class="mode-selector">
             <button class="mode-btn active" data-mode="classic">
@@ -66,6 +71,12 @@
             </button>
             <button class="mode-btn" data-mode="precision">
                 <i class="fas fa-crosshairs"></i>Precision
+            </button>
+            <button class="mode-btn" data-mode="random">
+                <i class="fas fa-random"></i>Random
+            </button>
+            <button class="mode-btn" data-mode="all">
+                <i class="fas fa-infinity"></i>All Modes
             </button>
         </div>
         <div id="game-area">
@@ -115,33 +126,34 @@
             </div>
         </div>
         <div class="history-container">
-    <h3>Performance History</h3>
-    <div class="history-chart">
-        <canvas id="historyChart"></canvas>
+            <h3>Performance History</h3>
+            <div class="history-chart">
+                <canvas id="historyChart"></canvas>
+            </div>
+            <ul id="timeHistory"></ul>
+        </div>
     </div>
-    <ul id="timeHistory"></ul>
-</div>
-        <div class="modal" id="resultModal">
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2>Result</h2>
+            <div class="result-stats"></div>
             <div class="xp-gain"></div>
             <div class="level-progress"></div>
-            <div class="modal-content">
-                <h2>Result</h2>
-                <div class="result-stats"></div>
-                <div class="modal-buttons">
-                    <button class="primary-btn" id="closeModal">Continue</button>
-                    <button class="secondary-btn" id="shareResult">Share Result</button>
+            <div class="modal-buttons">
+                <button class="primary-btn" id="closeModal">Continue</button>
+                <button class="secondary-btn" id="shareResult">Share Result</button>
             </div>
         </div>
     </div>
     <div class="modal" id="levelUpModal">
-    <div class="modal-content celebration">
-        <h2>Level Up!</h2>
-        <div class="level-info"></div>
-        <div class="rewards-info"></div>
-        <button class="primary-btn" id="closeLevelModal">Continue</button>
+        <div class="modal-content celebration">
+            <h2>Level Up!</h2>
+            <div class="level-info"></div>
+            <div class="rewards-info"></div>
+            <button class="primary-btn" id="closeLevelModal">Continue</button>
+        </div>
     </div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

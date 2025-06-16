@@ -8,17 +8,18 @@ const avgTimeElement = document.getElementById('avgTime');
 const scoreElement = document.getElementById('score');
 const streakElement = document.getElementById('streak');
 const xpElement = document.getElementById('xp');
+const timeHistory = document.getElementById('timeHistory');
 const themeToggle = document.getElementById('themeToggle');
 const modeBtns = document.querySelectorAll('.mode-btn');
 const countdownElement = document.getElementById('countdown');
 const timerElement = document.getElementById('timer');
 const modal = document.getElementById('resultModal');
+const levelUpModal = document.getElementById('levelUpModal');
+const closeModal = document.getElementById('closeModal');
 const closeLevelModal = document.getElementById('closeLevelModal');
 const currentModeElement = document.getElementById('currentMode');
-const resultStats = document.querySelector('.result-stats');
 const comboMeter = document.getElementById('combo-meter');
-const timeHistory = document.getElementById('timeHistory');
-const levelUpModal = document.getElementById('levelUpModal');
+const resultStats = document.querySelector('.result-stats');
 
 let gameActive = false;
 let startTime = 0;
@@ -29,12 +30,14 @@ let streak = 0;
 let score = 0;
 let currentMode = 'classic';
 let chainCount = 0;
-let timerInterval = null;
-let xp = 0;
-let level = 1;
 let gameHistory = [];
 let chart = null;
+let xp = 0;
+let level = 1;
 let combo = 0;
+let allModesIndex = 0;
+let allModes = ['classic', 'countdown', 'chain', 'precision', 'random'];
+let timerInterval = null;
 
 const rankThresholds = {
     'Rookie': 0,
@@ -44,6 +47,15 @@ const rankThresholds = {
     'Platinum': 10000,
     'Diamond': 20000,
     'Master': 50000
+};
+
+const achievements = {
+    'speed-demon': { threshold: 150, awarded: false },
+    'precision-master': { threshold: 5, awarded: false },
+    'chain-master': { threshold: 10, awarded: false },
+    'consistency': { threshold: 3, awarded: false },
+    'perfect-round': { threshold: 100, awarded: false },
+    'master': { threshold: 50000, awarded: false }
 };
 
 const modeColors = {
@@ -60,6 +72,11 @@ themeToggle.addEventListener('change', () => {
     document.body.classList.toggle('dark-mode');
     const isDarkMode = document.body.classList.contains('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
+    if (chart) {
+        chart.options.scales.y.grid.color = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+        chart.options.scales.x.grid.color = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+        chart.update();
+    }
 });
 
 const darkModeSaved = localStorage.getItem('darkMode');
@@ -67,43 +84,6 @@ if (darkModeSaved === 'true') {
     document.body.classList.remove('light-mode');
     document.body.classList.add('dark-mode');
     themeToggle.checked = true;
-}
-
-const achievements = {
-    'speed-demon': { threshold: 150, awarded: false },
-    'precision-master': { threshold: 5, awarded: false },
-    'chain-master': { threshold: 10, awarded: false },
-    'consistency': { threshold: 3, awarded: false },
-    'perfect-round': { threshold: 100, awarded: false },
-    'master': { threshold: 50000, awarded: false }
-};
-
-function createParticle(x, y, color) {
-    const particles = document.getElementById('particles');
-    for (let i = 0; i < 10; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.backgroundColor = color;
-        particle.style.left = x + 'px';
-        particle.style.top = y + 'px';
-        const angle = (Math.random() * 360) * Math.PI / 180;
-        const velocity = Math.random() * 100 + 50;
-        const lifetime = Math.random() * 500 + 500;
-        particle.style.transform = `translate(${Math.cos(angle) * velocity}px, ${Math.sin(angle) * velocity}px)`;
-        particle.style.transition = `transform ${lifetime}ms linear, opacity ${lifetime}ms linear`;
-        particle.style.opacity = '0';
-        particles.appendChild(particle);
-        setTimeout(() => particle.remove(), lifetime);
-    }
-}
-
-function createRipple(x, y) {
-    const ripple = document.createElement('div');
-    ripple.className = 'ripple';
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    gameArea.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
 }
 
 function initChart() {
@@ -147,6 +127,34 @@ function updateChart() {
     chart.update();
 }
 
+function createParticle(x, y, color) {
+    const particles = document.getElementById('particles');
+    for (let i = 0; i < 10; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.backgroundColor = color;
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        const angle = (Math.random() * 360) * Math.PI / 180;
+        const velocity = Math.random() * 100 + 50;
+        const lifetime = Math.random() * 500 + 500;
+        particle.style.transform = `translate(${Math.cos(angle) * velocity}px, ${Math.sin(angle) * velocity}px)`;
+        particle.style.transition = `transform ${lifetime}ms linear, opacity ${lifetime}ms linear`;
+        particle.style.opacity = '0';
+        particles.appendChild(particle);
+        setTimeout(() => particle.remove(), lifetime);
+    }
+}
+
+function createRipple(x, y) {
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    gameArea.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+}
+
 function updateTimer() {
     if (startTime && gameActive) {
         const currentTime = Date.now();
@@ -163,14 +171,35 @@ function stopTimer() {
     clearInterval(timerInterval);
 }
 
-function getRandomMode() {
-    const modes = ['classic', 'countdown', 'chain', 'precision'];
-    return modes[Math.floor(Math.random() * modes.length)];
+function checkLevelUp() {
+    const xpNeeded = Math.floor(1000 * Math.pow(1.5, level - 1));
+    if (xp >= xpNeeded) {
+        level++;
+        xp -= xpNeeded;
+        showLevelUpModal();
+        document.querySelector('.level').textContent = `Level ${level}`;
+        return true;
+    }
+    return false;
 }
 
-function nextAllMode() {
-    allModesIndex = (allModesIndex + 1) % allModes.length;
-    return allModes[allModesIndex];
+function showLevelUpModal() {
+    levelUpModal.style.display = 'flex';
+    const levelInfo = levelUpModal.querySelector('.level-info');
+    levelInfo.innerHTML = `
+        <h3>Level ${level} Reached!</h3>
+        <p>New features unlocked!</p>
+    `;
+}
+
+function updateRank() {
+    const ranks = Object.entries(rankThresholds).reverse();
+    for (const [rank, threshold] of ranks) {
+        if (score >= threshold) {
+            document.querySelector('.rank').textContent = rank;
+            break;
+        }
+    }
 }
 
 function checkAchievements(reactionTime) {
@@ -201,7 +230,7 @@ function unlockAchievement(id) {
         const element = document.getElementById(id);
         element.classList.remove('locked');
         element.classList.add('pulse');
-        addXP(100);
+        addXP(500);
         setTimeout(() => element.classList.remove('pulse'), 1000);
     }
 }
@@ -209,11 +238,7 @@ function unlockAchievement(id) {
 function addXP(amount) {
     xp += amount;
     xpElement.textContent = xp;
-    if (xp >= level * 1000) {
-        level++;
-        xp = 0;
-        document.querySelector('.level').textContent = `Level ${level}`;
-    }
+    checkLevelUp();
 }
 
 function updateCombo(success) {
@@ -227,6 +252,16 @@ function updateCombo(success) {
         combo = 0;
         comboMeter.style.opacity = '0';
     }
+}
+
+function getRandomMode() {
+    const modes = ['classic', 'countdown', 'chain', 'precision'];
+    return modes[Math.floor(Math.random() * modes.length)];
+}
+
+function nextAllMode() {
+    allModesIndex = (allModesIndex + 1) % allModes.length;
+    return allModes[allModesIndex];
 }
 
 function updateStats(reactionTime) {
@@ -250,6 +285,9 @@ function updateStats(reactionTime) {
         }
         streakElement.textContent = streak;
         scoreElement.textContent = score;
+        updateRank();
+        checkAchievements(reactionTime);
+        updateChart();
     }
 }
 
@@ -258,6 +296,7 @@ function showResult(reactionTime) {
         <h3>${typeof reactionTime === 'number' ? reactionTime + 'ms' : reactionTime}</h3>
         <p>Streak: ${streak}</p>
         <p>Score: ${score}</p>
+        <p>XP: +${10 + Math.floor(combo / 3) * 5}</p>
     `;
     modal.style.display = 'flex';
 }
@@ -277,6 +316,18 @@ function moveTarget() {
     const pos = getRandomPosition();
     target.style.left = `${pos.x}px`;
     target.style.top = `${pos.y}px`;
+}
+
+function addHistoryEntry(time) {
+    const li = document.createElement('li');
+    li.innerHTML = `
+        <span>Attempt ${times.length}</span>
+        <span>${typeof time === 'number' ? time + 'ms' : time}</span>
+    `;
+    timeHistory.insertBefore(li, timeHistory.firstChild);
+    if (timeHistory.children.length > 10) {
+        timeHistory.removeChild(timeHistory.lastChild);
+    }
 }
 
 function startClassicMode() {
@@ -320,6 +371,20 @@ function startPrecisionMode() {
     startTimer();
 }
 
+function startRandomMode() {
+    const randomMode = getRandomMode();
+    currentMode = randomMode;
+    currentModeElement.textContent = randomMode.charAt(0).toUpperCase() + randomMode.slice(1);
+    startSelectedMode();
+}
+
+function startAllMode() {
+    const nextMode = nextAllMode();
+    currentMode = nextMode;
+    currentModeElement.textContent = nextMode.charAt(0).toUpperCase() + nextMode.slice(1);
+    startSelectedMode();
+}
+
 function startSelectedMode() {
     switch(currentMode) {
         case 'classic':
@@ -346,7 +411,13 @@ function startGame() {
     startBtn.disabled = true;
     target.classList.remove('pulse');
     moveTarget();
-    startSelectedMode();
+    if (currentMode === 'random') {
+        startRandomMode();
+    } else if (currentMode === 'all') {
+        startAllMode();
+    } else {
+        startSelectedMode();
+    }
 }
 
 function endGame(reactionTime) {
@@ -356,7 +427,13 @@ function endGame(reactionTime) {
     target.classList.remove('pulse');
     stopTimer();
     updateStats(reactionTime);
+    addHistoryEntry(reactionTime);
     showResult(reactionTime);
+    if (currentMode === 'all' && typeof reactionTime === 'number') {
+        setTimeout(() => {
+            if (!gameActive) startGame();
+        }, 2000);
+    }
 }
 
 function shareResult() {
@@ -413,6 +490,10 @@ resetBtn.addEventListener('click', () => {
     combo = 0;
     xp = 0;
     level = 1;
+    updateStats();
+    timeHistory.innerHTML = '';
+    updateChart();
+    document.querySelector('.rank').textContent = 'Rookie';
     document.querySelector('.level').textContent = 'Level 1';
     comboMeter.style.opacity = '0';
     
@@ -449,6 +530,10 @@ closeModal.addEventListener('click', () => {
     modal.style.display = 'none';
 });
 
+closeLevelModal.addEventListener('click', () => {
+    levelUpModal.style.display = 'none';
+});
+
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && !startBtn.disabled) {
         e.preventDefault();
@@ -456,6 +541,9 @@ document.addEventListener('keydown', (e) => {
     } else if (e.code === 'Escape') {
         if (modal.style.display === 'flex') {
             modal.style.display = 'none';
+        }
+        if (levelUpModal.style.display === 'flex') {
+            levelUpModal.style.display = 'none';
         }
     }
 });
@@ -473,7 +561,54 @@ document.addEventListener('touchmove', (e) => {
     }
 }, { passive: false });
 
+function saveGameState() {
+    const gameState = {
+        bestTime,
+        score,
+        level,
+        xp,
+        achievements: Object.entries(achievements).reduce((acc, [key, value]) => {
+            acc[key] = value.awarded;
+            return acc;
+        }, {})
+    };
+    localStorage.setItem('reactionGameState', JSON.stringify(gameState));
+}
+
+function loadGameState() {
+    const savedState = localStorage.getItem('reactionGameState');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        bestTime = state.bestTime;
+        score = state.score;
+        level = state.level;
+        xp = state.xp;
+        
+        if (state.achievements) {
+            Object.entries(state.achievements).forEach(([key, awarded]) => {
+                if (awarded) {
+                    achievements[key].awarded = true;
+                    const element = document.getElementById(key);
+                    element.classList.remove('locked');
+                }
+            });
+        }
+        
+        if (bestTime !== Infinity) {
+            bestTimeElement.textContent = `${bestTime}ms`;
+        }
+        scoreElement.textContent = score;
+        document.querySelector('.level').textContent = `Level ${level}`;
+        xpElement.textContent = xp;
+        updateRank();
+    }
+}
+
+window.addEventListener('beforeunload', saveGameState);
+
 function initGame() {
+    initChart();
+    loadGameState();
     target.style.background = modeColors[currentMode];
     
     const updateGameAreaSize = () => {
