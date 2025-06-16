@@ -129,6 +129,25 @@ input:checked + .slider:before {
     backdrop-filter: blur(10px);
 }
 
+.timer-display {
+    text-align: center;
+    font-size: 2em;
+    font-weight: bold;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+}
+
+#countdown {
+    font-size: 3em;
+    color: var(--warning-color);
+}
+
+#timer {
+    color: var(--accent-color);
+}
+
 .title-section {
     display: flex;
     flex-direction: column;

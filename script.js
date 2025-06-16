@@ -11,6 +11,8 @@ const xpElement = document.getElementById('xp');
 const themeToggle = document.getElementById('themeToggle');
 const modeBtns = document.querySelectorAll('.mode-btn');
 const currentModeElement = document.getElementById('currentMode');
+const countdownElement = document.getElementById('countdown');
+const timerElement = document.getElementById('timer');
 
 let gameActive = false;
 let startTime = 0;
@@ -21,6 +23,7 @@ let streak = 0;
 let score = 0;
 let xp = 0;
 let currentMode = 'classic';
+let timerInterval = null;
 
 const modeColors = {
     classic: '#FF4081',
@@ -29,6 +32,22 @@ const modeColors = {
     precision: '#9C27B0',
     random: '#FF9800'
 };
+
+function updateTimer() {
+    if (startTime && gameActive) {
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - startTime) / 1000;
+        timerElement.textContent = elapsedTime.toFixed(3) + 's';
+    }
+}
+
+function startTimer() {
+    timerInterval = setInterval(updateTimer, 10);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
 
 themeToggle.addEventListener('change', () => {
     document.body.classList.toggle('light-mode');
@@ -93,6 +112,7 @@ function startGame() {
     timeoutId = setTimeout(() => {
         target.style.background = '#00ff00';
         startTime = Date.now();
+        startTimer();
     }, delay);
 }
 
@@ -100,6 +120,7 @@ function endGame(reactionTime) {
     gameActive = false;
     clearTimeout(timeoutId);
     startBtn.disabled = false;
+    stopTimer();
     updateStats(reactionTime);
 }
 
