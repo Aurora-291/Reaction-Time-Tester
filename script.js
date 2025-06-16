@@ -13,6 +13,7 @@ const modeBtns = document.querySelectorAll('.mode-btn');
 const currentModeElement = document.getElementById('currentMode');
 const countdownElement = document.getElementById('countdown');
 const timerElement = document.getElementById('timer');
+const comboMeter = document.getElementById('combo-meter');
 
 let gameActive = false;
 let startTime = 0;
@@ -24,6 +25,10 @@ let score = 0;
 let xp = 0;
 let currentMode = 'classic';
 let timerInterval = null;
+let chainCount = 0;
+let combo = 0;
+let allModesIndex = 0;
+let allModes = ['classic', 'countdown', 'chain', 'precision', 'random'];
 
 const modeColors = {
     classic: '#FF4081',
@@ -47,6 +52,75 @@ function startTimer() {
 
 function stopTimer() {
     clearInterval(timerInterval);
+}
+
+function createParticle(x, y, color) {
+    const particles = document.getElementById('particles');
+    for (let i = 0; i < 10; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.backgroundColor = color;
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        const angle = (Math.random() * 360) * Math.PI / 180;
+        const velocity = Math.random() * 100 + 50;
+        const lifetime = Math.random() * 500 + 500;
+        particle.style.transform = `translate(${Math.cos(angle) * velocity}px, ${Math.sin(angle) * velocity}px)`;
+        particle.style.transition = `transform ${lifetime}ms linear, opacity ${lifetime}ms linear`;
+        particle.style.opacity = '0';
+        particles.appendChild(particle);
+        setTimeout(() => particle.remove(), lifetime);
+    }
+}
+
+function createRipple(x, y) {
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    gameArea.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+}
+
+function updateCombo(success) {
+    if (success) {
+        combo++;
+        if (combo > 2) {
+            comboMeter.style.opacity = '1';
+            comboMeter.textContent = `Combo x${combo}`;
+        }
+    } else {
+        combo = 0;
+        comboMeter.style.opacity = '0';
+    }
+}
+
+function startCountdownMode() {
+    let count = 3;
+    countdownElement.textContent = count;
+    countdownElement.classList.add('fade-in');
+    target.style.background = modeColors.countdown;
+    const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownElement.textContent = count;
+        } else {
+            clearInterval(interval);
+            countdownElement.classList.remove('fade-in');
+            target.style.background = '#00ff00';
+            startTime = Date.now();
+            startTimer();
+        }
+    }, 1000);
+}
+
+function startPrecisionMode() {
+    target.style.width = '40px';
+    target.style.height = '40px';
+    target.style.background = modeColors.precision;
+    target.innerHTML = '<i class="fas fa-crosshairs"></i>';
+    startTime = Date.now();
+    startTimer();
 }
 
 themeToggle.addEventListener('change', () => {
@@ -124,8 +198,24 @@ function endGame(reactionTime) {
     updateStats(reactionTime);
 }
 
-target.addEventListener('click', () => {
+target.addEventListener('click', (e) => {
     if (!gameActive) return;
+    
+    const rect = target.getBoundingClientRect();
+    createParticle(e.clientX - rect.left, e.clientY - rect.top, getComputedStyle(target).backgroundColor);
+    createRipple(e.clientX - rect.left, e.clientY - rect.top);
+    
+    if (currentMode === 'chain') {
+        chainCount++;
+        target.textContent = chainCount;
+        if (chainCount >= 5) {
+            const avgTime = Math.round((Date.now() - startTime) / 5);
+            endGame(avgTime);
+        } else {
+            moveTarget();
+        }
+        return;
+    }
     
     if (!startTime) {
         endGame('Too early!');
