@@ -16,7 +16,7 @@ const modal = document.getElementById('resultModal');
 const closeLevelModal = document.getElementById('closeLevelModal');
 const currentModeElement = document.getElementById('currentMode');
 const resultStats = document.querySelector('.result-stats');
-const attemptsElement = document.getElementById('attempts');
+const comboMeter = document.getElementById('combo-meter');
 
 let gameActive = false;
 let startTime = 0;
@@ -27,9 +27,10 @@ let streak = 0;
 let score = 0;
 let currentMode = 'classic';
 let chainCount = 0;
-let allModesIndex = 0;
-let allModes = ['classic', 'countdown', 'chain', 'precision', 'random'];
 let timerInterval = null;
+let xp = 0;
+let level = 1;
+let combo = 0;
 
 const modeColors = {
     classic: '#FF4081',
@@ -53,6 +54,11 @@ if (darkModeSaved === 'true') {
     document.body.classList.add('dark-mode');
     themeToggle.checked = true;
 }
+const achievements = {
+    'speed-demon': { threshold: 150, awarded: false },
+    'precision-master': { threshold: 5, awarded: false },
+    'chain-master': { threshold: 10, awarded: false }
+};
 
 function createParticle(x, y, color) {
     const particles = document.getElementById('particles');
@@ -108,6 +114,52 @@ function nextAllMode() {
     return allModes[allModesIndex];
 }
 
+function checkAchievements(reactionTime) {
+    if (reactionTime < achievements['speed-demon'].threshold && !achievements['speed-demon'].awarded) {
+        unlockAchievement('speed-demon');
+    }
+    if (streak >= achievements['precision-master'].threshold && !achievements['precision-master'].awarded) {
+        unlockAchievement('precision-master');
+    }
+    if (chainCount >= achievements['chain-master'].threshold && !achievements['chain-master'].awarded) {
+        unlockAchievement('chain-master');
+    }
+}
+
+function unlockAchievement(id) {
+    if (!achievements[id].awarded) {
+        achievements[id].awarded = true;
+        const element = document.getElementById(id);
+        element.classList.remove('locked');
+        element.classList.add('pulse');
+        addXP(100);
+        setTimeout(() => element.classList.remove('pulse'), 1000);
+    }
+}
+
+function addXP(amount) {
+    xp += amount;
+    xpElement.textContent = xp;
+    if (xp >= level * 1000) {
+        level++;
+        xp = 0;
+        document.querySelector('.level').textContent = `Level ${level}`;
+    }
+}
+
+function updateCombo(success) {
+    if (success) {
+        combo++;
+        if (combo > 2) {
+            comboMeter.style.opacity = '1';
+            comboMeter.textContent = `Combo x${combo}`;
+        }
+    } else {
+        combo = 0;
+        comboMeter.style.opacity = '0';
+    }
+}
+
 function updateStats(reactionTime) {
     if (typeof reactionTime === 'number') {
         if (reactionTime < bestTime) {
@@ -119,6 +171,13 @@ function updateStats(reactionTime) {
         avgTimeElement.textContent = `${Math.round(avg)}ms`;
         if (reactionTime < 300) {
             streak++;
+            const bonus = Math.floor(combo / 3) * 5;
+            score += streak * 10 + bonus;
+            updateCombo(true);
+            addXP(10 + bonus);
+        } else {
+            streak = 0;
+            updateCombo(false);
         }
         streakElement.textContent = streak;
         scoreElement.textContent = score;
@@ -192,20 +251,6 @@ function startPrecisionMode() {
     startTimer();
 }
 
-function startRandomMode() {
-    const randomMode = getRandomMode();
-    currentMode = randomMode;
-    currentModeElement.textContent = randomMode.charAt(0).toUpperCase() + randomMode.slice(1);
-    startSelectedMode();
-}
-
-function startAllMode() {
-    const nextMode = nextAllMode();
-    currentMode = nextMode;
-    currentModeElement.textContent = nextMode.charAt(0).toUpperCase() + nextMode.slice(1);
-    startSelectedMode();
-}
-
 function startSelectedMode() {
     switch(currentMode) {
         case 'classic':
@@ -232,13 +277,7 @@ function startGame() {
     startBtn.disabled = true;
     target.classList.remove('pulse');
     moveTarget();
-    if (currentMode === 'random') {
-        startRandomMode();
-    } else if (currentMode === 'all') {
-        startAllMode();
-    } else {
-        startSelectedMode();
-    }
+    startSelectedMode();
 }
 
 function endGame(reactionTime) {
@@ -249,11 +288,6 @@ function endGame(reactionTime) {
     stopTimer();
     updateStats(reactionTime);
     showResult(reactionTime);
-    if (currentMode === 'all' && typeof reactionTime === 'number') {
-        setTimeout(() => {
-            if (!gameActive) startGame();
-        }, 2000);
-    }
 }
 
 function shareResult() {
@@ -307,6 +341,18 @@ resetBtn.addEventListener('click', () => {
     streak = 0;
     score = 0;
     chainCount = 0;
+    combo = 0;
+    xp = 0;
+    level = 1;
+    document.querySelector('.level').textContent = 'Level 1';
+    comboMeter.style.opacity = '0';
+    
+    Object.keys(achievements).forEach(id => {
+        achievements[id].awarded = false;
+        const element = document.getElementById(id);
+        element.classList.add('locked');
+        element.classList.remove('pulse');
+    });
 });
 
 modeBtns.forEach(btn => {
