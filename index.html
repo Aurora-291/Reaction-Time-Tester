@@ -100,17 +100,48 @@
                     <i class="fas fa-link"></i>
                     <span>Chain Master</span>
                 </div>
+                <div class="achievement locked" id="consistency">
+                    <i class="fas fa-medal"></i>
+                    <span>Consistency</span>
+                </div>
+                <div class="achievement locked" id="perfect-round">
+                    <i class="fas fa-star"></i>
+                    <span>Perfect Round</span>
+                </div>
+                <div class="achievement locked" id="master">
+                    <i class="fas fa-crown"></i>
+                    <span>Master</span>
+                </div>
             </div>
         </div>
+        <div class="history-container">
+    <h3>Performance History</h3>
+    <div class="history-chart">
+        <canvas id="historyChart"></canvas>
+    </div>
+    <ul id="timeHistory"></ul>
+</div>
         <div class="modal" id="resultModal">
+            <div class="xp-gain"></div>
+            <div class="level-progress"></div>
             <div class="modal-content">
                 <h2>Result</h2>
                 <div class="result-stats"></div>
                 <div class="modal-buttons">
                     <button class="primary-btn" id="closeModal">Continue</button>
+                    <button class="secondary-btn" id="shareResult">Share Result</button>
             </div>
         </div>
     </div>
+    <div class="modal" id="levelUpModal">
+    <div class="modal-content celebration">
+        <h2>Level Up!</h2>
+        <div class="level-info"></div>
+        <div class="rewards-info"></div>
+        <button class="primary-btn" id="closeLevelModal">Continue</button>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

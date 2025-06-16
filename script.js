@@ -17,6 +17,8 @@ const closeLevelModal = document.getElementById('closeLevelModal');
 const currentModeElement = document.getElementById('currentMode');
 const resultStats = document.querySelector('.result-stats');
 const comboMeter = document.getElementById('combo-meter');
+const timeHistory = document.getElementById('timeHistory');
+const levelUpModal = document.getElementById('levelUpModal');
 
 let gameActive = false;
 let startTime = 0;
@@ -30,7 +32,19 @@ let chainCount = 0;
 let timerInterval = null;
 let xp = 0;
 let level = 1;
+let gameHistory = [];
+let chart = null;
 let combo = 0;
+
+const rankThresholds = {
+    'Rookie': 0,
+    'Bronze': 1000,
+    'Silver': 2500,
+    'Gold': 5000,
+    'Platinum': 10000,
+    'Diamond': 20000,
+    'Master': 50000
+};
 
 const modeColors = {
     classic: '#FF4081',
@@ -54,10 +68,14 @@ if (darkModeSaved === 'true') {
     document.body.classList.add('dark-mode');
     themeToggle.checked = true;
 }
+
 const achievements = {
     'speed-demon': { threshold: 150, awarded: false },
     'precision-master': { threshold: 5, awarded: false },
-    'chain-master': { threshold: 10, awarded: false }
+    'chain-master': { threshold: 10, awarded: false },
+    'consistency': { threshold: 3, awarded: false },
+    'perfect-round': { threshold: 100, awarded: false },
+    'master': { threshold: 50000, awarded: false }
 };
 
 function createParticle(x, y, color) {
@@ -86,6 +104,47 @@ function createRipple(x, y) {
     ripple.style.top = y + 'px';
     gameArea.appendChild(ripple);
     setTimeout(() => ripple.remove(), 600);
+}
+
+function initChart() {
+    const ctx = document.querySelector('#historyChart').getContext('2d');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Reaction Time',
+                data: [],
+                borderColor: getComputedStyle(document.body).getPropertyValue('--primary-color'),
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    if (!chart) initChart();
+    chart.data.labels = times.map((_, i) => `Attempt ${i + 1}`);
+    chart.data.datasets[0].data = times;
+    chart.update();
 }
 
 function updateTimer() {
@@ -123,6 +182,16 @@ function checkAchievements(reactionTime) {
     }
     if (chainCount >= achievements['chain-master'].threshold && !achievements['chain-master'].awarded) {
         unlockAchievement('chain-master');
+    }
+    if (score >= achievements['master'].threshold && !achievements['master'].awarded) {
+        unlockAchievement('master');
+    }
+    const lastThree = times.slice(-3);
+    if (lastThree.length === 3 && lastThree.every(t => Math.abs(t - lastThree[0]) < 20)) {
+        unlockAchievement('consistency');
+    }
+    if (reactionTime < 100) {
+        unlockAchievement('perfect-round');
     }
 }
 
